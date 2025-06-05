@@ -43,7 +43,7 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
   
   const currentParticipant = trip?.trip_participants?.find(p => p.user_id === user?.id);
 
-  const getCurrentItems = (): (TripDestination | TripAccommodation | TripTransportation)[] => {
+  const getCurrentItems = () => {
     switch (currentStage) {
       case 'destinations': return destinations;
       case 'accommodations': return accommodations;
