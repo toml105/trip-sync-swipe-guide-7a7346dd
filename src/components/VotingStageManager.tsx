@@ -27,13 +27,14 @@ interface VotingStageManagerProps {
 const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { data: trip } = useTrip(tripId);
+  const { data: trip, isLoading, refetch } = useTrip(tripId);
   
   const [currentStage, setCurrentStage] = useState<VotingStage>('destinations');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userVotes, setUserVotes] = useState<Record<string, 'like' | 'pass'>>({});
   const [isAnimating, setIsAnimating] = useState(false);
   const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
+  const [isLoadingData, setIsLoadingData] = useState(true);
 
   const { participants, voteCounts } = useRealtimeCollaboration(tripId, currentStage);
   
@@ -42,6 +43,17 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
   const transportation = trip?.trip_transportation || [];
   
   const currentParticipant = trip?.trip_participants?.find(p => p.user_id === user?.id);
+
+  console.log('VotingStageManager state:', {
+    tripId,
+    currentStage,
+    destinationsCount: destinations.length,
+    accommodationsCount: accommodations.length,
+    transportationCount: transportation.length,
+    currentIndex,
+    isLoadingData,
+    trip: !!trip
+  });
 
   const getCurrentItems = () => {
     switch (currentStage) {
@@ -53,12 +65,23 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
   };
 
   useEffect(() => {
-    if (trip) {
-      // Determine current stage based on trip progress
-      const stage = trip.current_stage as VotingStage || 'destinations';
-      setCurrentStage(stage);
-      loadUserVotes(stage);
-    }
+    const loadData = async () => {
+      if (trip) {
+        console.log('Trip loaded:', {
+          destinationsCount: destinations.length,
+          accommodationsCount: accommodations.length,
+          transportationCount: transportation.length
+        });
+
+        // Determine current stage based on trip progress
+        const stage = trip.current_stage as VotingStage || 'destinations';
+        setCurrentStage(stage);
+        await loadUserVotes(stage);
+        setIsLoadingData(false);
+      }
+    };
+
+    loadData();
   }, [trip, user?.id]);
 
   const loadUserVotes = async (stage: VotingStage) => {
@@ -265,6 +288,37 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
 
   const items = getCurrentItems();
   const votedParticipants = participants.filter(p => p.hasVoted).length;
+
+  // Show loading state
+  if (isLoading || isLoadingData) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading destinations...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show no data state
+  if (items.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">
+          No {currentStage} available yet
+        </h2>
+        <p className="text-gray-600 mb-6">
+          {currentStage === 'destinations' 
+            ? "Destinations are still being generated. Please wait a moment and refresh the page."
+            : `${currentStage} data is being prepared.`}
+        </p>
+        <Button onClick={() => refetch()}>
+          Refresh
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

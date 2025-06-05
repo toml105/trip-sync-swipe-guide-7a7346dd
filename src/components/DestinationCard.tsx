@@ -33,10 +33,23 @@ const DestinationCard = ({
   isAnimating = false, 
   animationDirection = null 
 }: DestinationCardProps) => {
+  const [imageError, setImageError] = useState(false);
+  
   const budgetKey = budget === '$' ? 'estimated_cost_budget' : 
                    budget === '$$' ? 'estimated_cost_mid_range' : 
                    'estimated_cost_luxury';
   const estimatedCost = destination[budgetKey];
+
+  // Fallback image if the destination image fails to load
+  const fallbackImage = `https://images.unsplash.com/1600x900/?travel,${encodeURIComponent(destination.name)}&sig=${destination.id}`;
+  const imageUrl = imageError ? fallbackImage : destination.image_url || fallbackImage;
+
+  console.log('Rendering destination card:', {
+    name: destination.name,
+    imageUrl: destination.image_url,
+    fallbackImage,
+    imageError
+  });
 
   return (
     <div className="relative w-full max-w-sm mx-auto">
@@ -50,13 +63,15 @@ const DestinationCard = ({
       >
         <div className="relative">
           <img
-            src={destination.image_url}
+            src={imageUrl}
             alt={destination.name}
             className="w-full h-64 object-cover rounded-t-lg"
+            onError={() => setImageError(true)}
+            onLoad={() => console.log('Image loaded successfully for:', destination.name)}
           />
           <div className="absolute top-4 right-4">
             <Badge variant="secondary" className="bg-white/90 text-gray-900">
-              {destination.best_time_to_visit}
+              {destination.best_time_to_visit || 'Year-round'}
             </Badge>
           </div>
         </div>
@@ -74,12 +89,12 @@ const DestinationCard = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center text-green-600">
                 <DollarSign className="w-4 h-4 mr-1" />
-                <span className="font-semibold">${estimatedCost}</span>
+                <span className="font-semibold">${estimatedCost || 'N/A'}</span>
                 <span className="text-gray-500 ml-1">per person</span>
               </div>
               <div className="flex items-center text-blue-600">
                 <Calendar className="w-4 h-4 mr-1" />
-                <span className="text-sm">{destination.best_time_to_visit}</span>
+                <span className="text-sm">{destination.best_time_to_visit || 'Year-round'}</span>
               </div>
             </div>
 
@@ -88,11 +103,17 @@ const DestinationCard = ({
             <div className="space-y-2">
               <p className="text-sm font-medium text-gray-900">Highlights:</p>
               <div className="flex flex-wrap gap-2">
-                {destination.highlights?.map((highlight, index) => (
-                  <Badge key={index} variant="outline" className="text-xs">
-                    {highlight}
+                {destination.highlights && destination.highlights.length > 0 ? (
+                  destination.highlights.map((highlight, index) => (
+                    <Badge key={index} variant="outline" className="text-xs">
+                      {highlight}
+                    </Badge>
+                  ))
+                ) : (
+                  <Badge variant="outline" className="text-xs">
+                    Explore this destination
                   </Badge>
-                ))}
+                )}
               </div>
             </div>
           </div>
