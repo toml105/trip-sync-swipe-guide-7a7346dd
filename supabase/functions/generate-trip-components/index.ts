@@ -125,6 +125,87 @@ async function getFlights(token: string, preferences: any) {
   }
 }
 
+// Generate AI destinations with proper error handling
+async function generateAIDestinations(preferences: any, count: number) {
+  try {
+    console.log('Generating AI destinations with OpenAI...');
+    
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openAIApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          {
+            role: 'system',
+            content: `Generate exactly ${count} diverse travel destinations as a JSON array. Each destination must have: name (string), country (string), description (string), estimated_cost_budget (number), estimated_cost_mid_range (number), estimated_cost_luxury (number), best_time_to_visit (string), highlights (array of strings), image_url (string - use unsplash URLs). Return ONLY the JSON array, no other text.`
+          },
+          {
+            role: 'user',
+            content: `Generate destinations based on: ${JSON.stringify(preferences)}`
+          }
+        ],
+        temperature: 0.8,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+    }
+
+    const aiDestData = await response.json();
+    console.log('OpenAI response:', aiDestData);
+    
+    if (!aiDestData.choices || !aiDestData.choices[0] || !aiDestData.choices[0].message) {
+      throw new Error('Invalid OpenAI response structure');
+    }
+
+    const content = aiDestData.choices[0].message.content;
+    if (!content) {
+      throw new Error('Empty content from OpenAI');
+    }
+
+    const aiDestinations = JSON.parse(content);
+    console.log('Parsed AI destinations:', aiDestinations);
+    
+    if (!Array.isArray(aiDestinations)) {
+      throw new Error('OpenAI did not return an array');
+    }
+
+    return aiDestinations;
+  } catch (error) {
+    console.error('Error generating AI destinations:', error);
+    // Return fallback destinations
+    return [
+      {
+        name: "Paris",
+        country: "France",
+        description: "The City of Light offers romance, culture, and world-class cuisine.",
+        estimated_cost_budget: 800,
+        estimated_cost_mid_range: 1200,
+        estimated_cost_luxury: 2000,
+        best_time_to_visit: "April to June, September to October",
+        highlights: ["Eiffel Tower", "Louvre Museum", "Notre-Dame", "Champs-Élysées"],
+        image_url: "https://images.unsplash.com/photo-1511739001486-6bfe10ce785f"
+      },
+      {
+        name: "Tokyo",
+        country: "Japan",
+        description: "A vibrant metropolis blending traditional culture with cutting-edge technology.",
+        estimated_cost_budget: 1000,
+        estimated_cost_mid_range: 1500,
+        estimated_cost_luxury: 2500,
+        best_time_to_visit: "March to May, September to November",
+        highlights: ["Shibuya Crossing", "Tokyo Tower", "Traditional temples", "Amazing food"],
+        image_url: "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf"
+      }
+    ];
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -173,6 +254,28 @@ serve(async (req) => {
       };
     });
 
+    // If we don't have enough data from Amadeus, supplement with AI-generated content
+    if (destinations.length < 8) {
+      console.log('Supplementing destinations with AI-generated content');
+      const aiDestinations = await generateAIDestinations(preferences, 8 - destinations.length);
+      
+      aiDestinations.forEach((dest: any) => {
+        destinations.push({
+          trip_id: tripId,
+          name: dest.name,
+          country: dest.country,
+          description: dest.description,
+          image_url: dest.image_url,
+          estimated_cost_budget: dest.estimated_cost_budget,
+          estimated_cost_mid_range: dest.estimated_cost_mid_range,
+          estimated_cost_luxury: dest.estimated_cost_luxury,
+          best_time_to_visit: dest.best_time_to_visit,
+          highlights: dest.highlights,
+          ai_generated: true,
+        });
+      });
+    }
+
     // Transform Amadeus hotel data
     const accommodations = amadeusHotels.slice(0, 12).map((hotel: any) => {
       const offer = hotel.offers?.[0];
@@ -216,50 +319,6 @@ serve(async (req) => {
         ai_generated: false,
       };
     });
-
-    // If we don't have enough data from Amadeus, supplement with AI-generated content
-    if (destinations.length < 8) {
-      console.log('Supplementing destinations with AI-generated content');
-      const aiDestinationsResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openAIApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {
-              role: 'system',
-              content: `Generate ${8 - destinations.length} diverse travel destinations as JSON array. Each should have: name, country, description, estimated_cost_budget, estimated_cost_mid_range, estimated_cost_luxury, best_time_to_visit, highlights array, image_url`
-            },
-            {
-              role: 'user',
-              content: `Generate destinations based on: ${JSON.stringify(preferences)}`
-            }
-          ],
-        }),
-      });
-
-      const aiDestData = await aiDestinationsResponse.json();
-      const aiDestinations = JSON.parse(aiDestData.choices[0].message.content);
-      
-      aiDestinations.forEach((dest: any) => {
-        destinations.push({
-          trip_id: tripId,
-          name: dest.name,
-          country: dest.country,
-          description: dest.description,
-          image_url: dest.image_url,
-          estimated_cost_budget: dest.estimated_cost_budget,
-          estimated_cost_mid_range: dest.estimated_cost_mid_range,
-          estimated_cost_luxury: dest.estimated_cost_luxury,
-          best_time_to_visit: dest.best_time_to_visit,
-          highlights: dest.highlights,
-          ai_generated: true,
-        });
-      });
-    }
 
     // Save all data to database
     const { data: savedDestinations, error: destError } = await supabase
