@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { CalendarIcon, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { useTrips } from '@/hooks/useTrips';
 
 interface CreateTripModalProps {
   open: boolean;
@@ -18,31 +19,29 @@ interface CreateTripModalProps {
 
 const CreateTripModal = ({ open, onOpenChange }: CreateTripModalProps) => {
   const navigate = useNavigate();
+  const { createTrip, isCreating } = useTrips();
   const [tripName, setTripName] = useState('');
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
   const [budget, setBudget] = useState<'$' | '$$' | '$$$'>('$$');
-  const [creatorName, setCreatorName] = useState('');
 
   const handleCreateTrip = () => {
-    if (!tripName || !startDate || !endDate || !creatorName) return;
+    if (!tripName || !startDate || !endDate) return;
 
-    const tripId = Math.random().toString(36).substring(2, 15);
-    const tripData = {
-      id: tripId,
+    createTrip({
       name: tripName,
-      startDate: startDate.toISOString(),
-      endDate: endDate.toISOString(),
+      start_date: startDate.toISOString().split('T')[0], // Convert to YYYY-MM-DD format
+      end_date: endDate.toISOString().split('T')[0],
       budget,
-      creator: creatorName,
-      participants: [creatorName],
-      votes: {},
-      createdAt: new Date().toISOString()
-    };
+      total_travelers: 1,
+    });
 
-    localStorage.setItem(`trip_${tripId}`, JSON.stringify(tripData));
+    // Reset form
+    setTripName('');
+    setStartDate(undefined);
+    setEndDate(undefined);
+    setBudget('$$');
     onOpenChange(false);
-    navigate(`/trip/${tripId}?name=${encodeURIComponent(creatorName)}`);
   };
 
   return (
@@ -60,16 +59,6 @@ const CreateTripModal = ({ open, onOpenChange }: CreateTripModalProps) => {
               placeholder="Summer Adventure 2024"
               value={tripName}
               onChange={(e) => setTripName(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="creator-name">Your Name</Label>
-            <Input
-              id="creator-name"
-              placeholder="Enter your name"
-              value={creatorName}
-              onChange={(e) => setCreatorName(e.target.value)}
             />
           </div>
 
@@ -153,10 +142,10 @@ const CreateTripModal = ({ open, onOpenChange }: CreateTripModalProps) => {
 
           <Button 
             onClick={handleCreateTrip}
-            disabled={!tripName || !startDate || !endDate || !creatorName}
+            disabled={!tripName || !startDate || !endDate || isCreating}
             className="w-full bg-gradient-to-r from-blue-600 to-orange-600 hover:from-blue-700 hover:to-orange-700"
           >
-            Create Trip & Get Shareable Link
+            {isCreating ? 'Creating Trip...' : 'Create Trip'}
           </Button>
         </div>
       </DialogContent>

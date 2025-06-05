@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { Tables, TablesInsert } from '@/integrations/supabase/types';
@@ -13,6 +14,7 @@ type TripParticipant = Tables<'trip_participants'>;
 export const useTrips = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   const tripsQuery = useQuery({
     queryKey: ['trips', user?.id],
@@ -65,12 +67,14 @@ export const useTrips = () => {
 
       return trip;
     },
-    onSuccess: () => {
+    onSuccess: (trip) => {
       queryClient.invalidateQueries({ queryKey: ['trips'] });
       toast({
         title: "Trip created!",
         description: "Your trip has been created successfully."
       });
+      // Navigate to the newly created trip
+      navigate(`/trip/${trip.id}`);
     },
     onError: (error) => {
       toast({
