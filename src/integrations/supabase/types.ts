@@ -9,6 +9,55 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      accommodation_votes: {
+        Row: {
+          accommodation_id: string
+          id: string
+          participant_id: string
+          trip_id: string
+          vote_type: string
+          voted_at: string
+        }
+        Insert: {
+          accommodation_id: string
+          id?: string
+          participant_id: string
+          trip_id: string
+          vote_type: string
+          voted_at?: string
+        }
+        Update: {
+          accommodation_id?: string
+          id?: string
+          participant_id?: string
+          trip_id?: string
+          vote_type?: string
+          voted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "accommodation_votes_accommodation_id_fkey"
+            columns: ["accommodation_id"]
+            isOneToOne: false
+            referencedRelation: "trip_accommodations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accommodation_votes_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "trip_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "accommodation_votes_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       destination_votes: {
         Row: {
           destination_id: string
@@ -51,6 +100,111 @@ export type Database = {
           },
           {
             foreignKeyName: "destination_votes_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transportation_votes: {
+        Row: {
+          id: string
+          participant_id: string
+          transportation_id: string
+          trip_id: string
+          vote_type: string
+          voted_at: string
+        }
+        Insert: {
+          id?: string
+          participant_id: string
+          transportation_id: string
+          trip_id: string
+          vote_type: string
+          voted_at?: string
+        }
+        Update: {
+          id?: string
+          participant_id?: string
+          transportation_id?: string
+          trip_id?: string
+          vote_type?: string
+          voted_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transportation_votes_participant_id_fkey"
+            columns: ["participant_id"]
+            isOneToOne: false
+            referencedRelation: "trip_participants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transportation_votes_transportation_id_fkey"
+            columns: ["transportation_id"]
+            isOneToOne: false
+            referencedRelation: "trip_transportation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transportation_votes_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_accommodations: {
+        Row: {
+          amenities: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          image_url: string | null
+          location: string
+          name: string
+          price_per_night_budget: number | null
+          price_per_night_luxury: number | null
+          price_per_night_mid_range: number | null
+          rating: number | null
+          trip_id: string
+          type: string
+        }
+        Insert: {
+          amenities?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location: string
+          name: string
+          price_per_night_budget?: number | null
+          price_per_night_luxury?: number | null
+          price_per_night_mid_range?: number | null
+          rating?: number | null
+          trip_id: string
+          type: string
+        }
+        Update: {
+          amenities?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          image_url?: string | null
+          location?: string
+          name?: string
+          price_per_night_budget?: number | null
+          price_per_night_luxury?: number | null
+          price_per_night_mid_range?: number | null
+          rating?: number | null
+          trip_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_accommodations_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"
@@ -157,6 +311,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "trip_participants_trip_id_fkey"
+            columns: ["trip_id"]
+            isOneToOne: false
+            referencedRelation: "trips"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      trip_transportation: {
+        Row: {
+          arrival_location: string
+          arrival_time: string | null
+          created_at: string
+          departure_location: string
+          departure_time: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          price_budget: number | null
+          price_luxury: number | null
+          price_mid_range: number | null
+          provider: string
+          trip_id: string
+          type: string
+        }
+        Insert: {
+          arrival_location: string
+          arrival_time?: string | null
+          created_at?: string
+          departure_location: string
+          departure_time?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          price_budget?: number | null
+          price_luxury?: number | null
+          price_mid_range?: number | null
+          provider: string
+          trip_id: string
+          type: string
+        }
+        Update: {
+          arrival_location?: string
+          arrival_time?: string | null
+          created_at?: string
+          departure_location?: string
+          departure_time?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          price_budget?: number | null
+          price_luxury?: number | null
+          price_mid_range?: number | null
+          provider?: string
+          trip_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trip_transportation_trip_id_fkey"
             columns: ["trip_id"]
             isOneToOne: false
             referencedRelation: "trips"

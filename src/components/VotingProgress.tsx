@@ -17,14 +17,15 @@ const VotingProgress = ({
   totalParticipants,
   userVotes 
 }: VotingProgressProps) => {
-  const userProgress = ((currentIndex + Object.keys(userVotes).length) / totalDestinations) * 100;
+  const userProgress = totalDestinations > 0 ? 
+    ((Object.keys(userVotes).length) / totalDestinations) * 100 : 0;
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-1 text-sm text-gray-600 bg-white/70 px-3 py-1 rounded-full">
           <Users className="w-4 h-4" />
-          <span>{votedParticipants}/{totalParticipants} voted</span>
+          <span>{votedParticipants}/{totalParticipants} completed</span>
         </div>
         <div className="text-sm text-gray-600">
           Your progress: {Object.keys(userVotes).length}/{totalDestinations}
