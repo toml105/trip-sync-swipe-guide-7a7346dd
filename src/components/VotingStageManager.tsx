@@ -295,13 +295,13 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
       <div className="flex justify-center items-center py-12">
         <div className="text-center">
           <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading destinations...</p>
+          <p className="text-gray-600">Loading voting content...</p>
         </div>
       </div>
     );
   }
 
-  // Show no data state
+  // Show no data state with action button
   if (items.length === 0) {
     return (
       <div className="text-center py-12">
@@ -310,11 +310,17 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
         </h2>
         <p className="text-gray-600 mb-6">
           {currentStage === 'destinations' 
-            ? "Destinations are still being generated. Please wait a moment and refresh the page."
-            : `${currentStage} data is being prepared.`}
+            ? "We need to generate destinations for you to vote on."
+            : `${currentStage} options need to be prepared.`}
         </p>
-        <Button onClick={() => refetch()}>
-          Refresh
+        <Button onClick={() => window.location.reload()} className="mr-4">
+          Refresh Page
+        </Button>
+        <Button 
+          variant="outline" 
+          onClick={() => navigate(`/trip/${tripId}`)}
+        >
+          Back to Trip Setup
         </Button>
       </div>
     );
