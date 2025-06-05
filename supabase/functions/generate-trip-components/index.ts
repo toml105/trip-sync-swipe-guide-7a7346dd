@@ -61,6 +61,7 @@ async function generateAIDestinations(preferences: any, budget: string, count: n
     });
 
     if (!response.ok) {
+      console.error(`OpenAI API error: ${response.status} ${response.statusText}`);
       throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
     }
 
@@ -72,7 +73,7 @@ async function generateAIDestinations(preferences: any, budget: string, count: n
     }
 
     const content = aiData.choices[0].message.content.trim();
-    console.log('Raw OpenAI content:', content);
+    console.log('Raw OpenAI content received, length:', content.length);
     
     // Parse the JSON response
     let destinations;
@@ -110,7 +111,7 @@ async function generateAIDestinations(preferences: any, budget: string, count: n
         estimated_cost_luxury: 1800,
         best_time_to_visit: "April to October",
         highlights: ["Oia Sunset", "Blue Dome Churches", "Red Beach", "Wine Tasting"],
-        image_url: "https://images.unsplash.com/1600x900/?travel,santorini&fit=crop"
+        image_url: "https://images.unsplash.com/1600x900/?travel,santorini&fit=crop&sig=1"
       },
       {
         name: "Tokyo",
@@ -121,7 +122,7 @@ async function generateAIDestinations(preferences: any, budget: string, count: n
         estimated_cost_luxury: 2200,
         best_time_to_visit: "March to May, September to November",
         highlights: ["Shibuya Crossing", "Tokyo Tower", "Traditional Temples", "Amazing Food"],
-        image_url: "https://images.unsplash.com/1600x900/?travel,tokyo&fit=crop"
+        image_url: "https://images.unsplash.com/1600x900/?travel,tokyo&fit=crop&sig=2"
       },
       {
         name: "Bali",
@@ -132,7 +133,7 @@ async function generateAIDestinations(preferences: any, budget: string, count: n
         estimated_cost_luxury: 1200,
         best_time_to_visit: "April to October",
         highlights: ["Uluwatu Temple", "Rice Terraces", "Beach Clubs", "Traditional Markets"],
-        image_url: "https://images.unsplash.com/1600x900/?travel,bali&fit=crop"
+        image_url: "https://images.unsplash.com/1600x900/?travel,bali&fit=crop&sig=3"
       },
       {
         name: "Paris",
@@ -143,7 +144,7 @@ async function generateAIDestinations(preferences: any, budget: string, count: n
         estimated_cost_luxury: 2000,
         best_time_to_visit: "April to June, September to October",
         highlights: ["Eiffel Tower", "Louvre Museum", "Notre-Dame", "Champs-Élysées"],
-        image_url: "https://images.unsplash.com/1600x900/?travel,paris&fit=crop"
+        image_url: "https://images.unsplash.com/1600x900/?travel,paris&fit=crop&sig=4"
       },
       {
         name: "New York City",
@@ -154,7 +155,7 @@ async function generateAIDestinations(preferences: any, budget: string, count: n
         estimated_cost_luxury: 2500,
         best_time_to_visit: "April to June, September to November",
         highlights: ["Times Square", "Central Park", "Statue of Liberty", "Broadway Shows"],
-        image_url: "https://images.unsplash.com/1600x900/?travel,new-york&fit=crop"
+        image_url: "https://images.unsplash.com/1600x900/?travel,new-york&fit=crop&sig=5"
       },
       {
         name: "Dubai",
@@ -165,7 +166,7 @@ async function generateAIDestinations(preferences: any, budget: string, count: n
         estimated_cost_luxury: 2800,
         best_time_to_visit: "November to March",
         highlights: ["Burj Khalifa", "Dubai Mall", "Desert Safari", "Marina Walk"],
-        image_url: "https://images.unsplash.com/1600x900/?travel,dubai&fit=crop"
+        image_url: "https://images.unsplash.com/1600x900/?travel,dubai&fit=crop&sig=6"
       },
       {
         name: "Barcelona",
@@ -176,7 +177,7 @@ async function generateAIDestinations(preferences: any, budget: string, count: n
         estimated_cost_luxury: 1600,
         best_time_to_visit: "May to September",
         highlights: ["Sagrada Familia", "Park Güell", "Las Ramblas", "Gothic Quarter"],
-        image_url: "https://images.unsplash.com/1600x900/?travel,barcelona&fit=crop"
+        image_url: "https://images.unsplash.com/1600x900/?travel,barcelona&fit=crop&sig=7"
       },
       {
         name: "Thailand",
@@ -187,7 +188,7 @@ async function generateAIDestinations(preferences: any, budget: string, count: n
         estimated_cost_luxury: 1100,
         best_time_to_visit: "November to March",
         highlights: ["Bangkok Temples", "Phi Phi Islands", "Floating Markets", "Thai Cuisine"],
-        image_url: "https://images.unsplash.com/1600x900/?travel,thailand&fit=crop"
+        image_url: "https://images.unsplash.com/1600x900/?travel,thailand&fit=crop&sig=8"
       }
     ];
 
@@ -236,7 +237,7 @@ serve(async (req) => {
         type: 'hotel',
         location: 'City Center',
         description: 'Comfortable budget accommodation with basic amenities.',
-        image_url: 'https://images.unsplash.com/1600x900/?hotel,budget&fit=crop',
+        image_url: 'https://images.unsplash.com/1600x900/?hotel,budget&fit=crop&sig=acc1',
         price_per_night_budget: 50,
         price_per_night_mid_range: 80,
         price_per_night_luxury: 120,
@@ -249,7 +250,7 @@ serve(async (req) => {
         type: 'resort',
         location: 'Beachfront',
         description: 'Premium resort with world-class amenities and service.',
-        image_url: 'https://images.unsplash.com/1600x900/?resort,luxury&fit=crop',
+        image_url: 'https://images.unsplash.com/1600x900/?resort,luxury&fit=crop&sig=acc2',
         price_per_night_budget: 200,
         price_per_night_mid_range: 350,
         price_per_night_luxury: 600,
@@ -258,6 +259,11 @@ serve(async (req) => {
       }
     ];
 
+    // Fix transportation times to use proper timestamp format
+    const now = new Date();
+    const departureTime = new Date(now.getTime() + (8 * 60 * 60 * 1000)); // 8 hours from now
+    const arrivalTime = new Date(departureTime.getTime() + (6 * 60 * 60 * 1000)); // 6 hours flight
+
     const transportation = [
       {
         trip_id: tripId,
@@ -265,8 +271,8 @@ serve(async (req) => {
         provider: 'Airlines',
         departure_location: 'Home',
         arrival_location: 'Destination',
-        departure_time: '08:00',
-        arrival_time: '14:00',
+        departure_time: departureTime.toISOString(),
+        arrival_time: arrivalTime.toISOString(),
         price_budget: 300,
         price_mid_range: 500,
         price_luxury: 800,
