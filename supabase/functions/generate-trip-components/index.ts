@@ -242,7 +242,6 @@ serve(async (req) => {
         price_per_night_luxury: 120,
         amenities: ['WiFi', 'Breakfast', 'Air Conditioning'],
         rating: 4.0,
-        ai_generated: true,
       },
       {
         trip_id: tripId,
@@ -256,7 +255,6 @@ serve(async (req) => {
         price_per_night_luxury: 600,
         amenities: ['WiFi', 'Spa', 'Pool', 'Restaurant', 'Room Service'],
         rating: 4.8,
-        ai_generated: true,
       }
     ];
 
@@ -274,7 +272,6 @@ serve(async (req) => {
         price_luxury: 800,
         duration_minutes: 360,
         description: 'Direct flight to your destination',
-        ai_generated: true,
       }
     ];
 
