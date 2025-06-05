@@ -1,35 +1,42 @@
 
 import { useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Heart, X, MapPin, Calendar, DollarSign } from 'lucide-react';
-import { Destination, Trip } from '@/types/trip';
+import { MapPin, Calendar, DollarSign } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+interface Destination {
+  id: string;
+  name: string;
+  country: string;
+  image_url: string;
+  estimated_cost_budget: number;
+  estimated_cost_mid_range: number;
+  estimated_cost_luxury: number;
+  best_time_to_visit: string;
+  highlights: string[];
+  description: string;
+}
 
 interface DestinationCardProps {
   destination: Destination;
-  trip: Trip;
+  budget: '$' | '$$' | '$$$';
   onVote: (destinationId: string, vote: 'like' | 'pass') => void;
+  isAnimating?: boolean;
+  animationDirection?: 'left' | 'right' | null;
 }
 
-const DestinationCard = ({ destination, trip, onVote }: DestinationCardProps) => {
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [animationDirection, setAnimationDirection] = useState<'left' | 'right' | null>(null);
-
-  const budgetKey = trip.budget === '$' ? 'budget' : trip.budget === '$$' ? 'midRange' : 'luxury';
-  const estimatedCost = destination.costPerPerson[budgetKey];
-
-  const handleVote = (vote: 'like' | 'pass') => {
-    setIsAnimating(true);
-    setAnimationDirection(vote === 'like' ? 'right' : 'left');
-    
-    setTimeout(() => {
-      onVote(destination.id, vote);
-      setIsAnimating(false);
-      setAnimationDirection(null);
-    }, 300);
-  };
+const DestinationCard = ({ 
+  destination, 
+  budget, 
+  onVote, 
+  isAnimating = false, 
+  animationDirection = null 
+}: DestinationCardProps) => {
+  const budgetKey = budget === '$' ? 'estimated_cost_budget' : 
+                   budget === '$$' ? 'estimated_cost_mid_range' : 
+                   'estimated_cost_luxury';
+  const estimatedCost = destination[budgetKey];
 
   return (
     <div className="relative w-full max-w-sm mx-auto">
@@ -43,13 +50,13 @@ const DestinationCard = ({ destination, trip, onVote }: DestinationCardProps) =>
       >
         <div className="relative">
           <img
-            src={destination.imageUrl}
+            src={destination.image_url}
             alt={destination.name}
             className="w-full h-64 object-cover rounded-t-lg"
           />
           <div className="absolute top-4 right-4">
             <Badge variant="secondary" className="bg-white/90 text-gray-900">
-              {destination.bestTimeToVisit}
+              {destination.best_time_to_visit}
             </Badge>
           </div>
         </div>
@@ -72,7 +79,7 @@ const DestinationCard = ({ destination, trip, onVote }: DestinationCardProps) =>
               </div>
               <div className="flex items-center text-blue-600">
                 <Calendar className="w-4 h-4 mr-1" />
-                <span className="text-sm">{destination.bestTimeToVisit}</span>
+                <span className="text-sm">{destination.best_time_to_visit}</span>
               </div>
             </div>
 
@@ -81,7 +88,7 @@ const DestinationCard = ({ destination, trip, onVote }: DestinationCardProps) =>
             <div className="space-y-2">
               <p className="text-sm font-medium text-gray-900">Highlights:</p>
               <div className="flex flex-wrap gap-2">
-                {destination.highlights.map((highlight, index) => (
+                {destination.highlights?.map((highlight, index) => (
                   <Badge key={index} variant="outline" className="text-xs">
                     {highlight}
                   </Badge>
@@ -91,27 +98,6 @@ const DestinationCard = ({ destination, trip, onVote }: DestinationCardProps) =>
           </div>
         </CardContent>
       </Card>
-
-      {/* Action Buttons */}
-      <div className="flex justify-center space-x-6 mt-6">
-        <Button
-          size="lg"
-          variant="outline"
-          onClick={() => handleVote('pass')}
-          className="w-16 h-16 rounded-full border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300"
-          disabled={isAnimating}
-        >
-          <X className="w-6 h-6" />
-        </Button>
-        <Button
-          size="lg"
-          onClick={() => handleVote('like')}
-          className="w-16 h-16 rounded-full bg-gradient-to-r from-pink-500 to-red-500 hover:from-pink-600 hover:to-red-600 text-white"
-          disabled={isAnimating}
-        >
-          <Heart className="w-6 h-6" />
-        </Button>
-      </div>
 
       {/* Swipe Indicators */}
       {isAnimating && (
