@@ -13,8 +13,12 @@ import TransportationCard from './TransportationCard';
 import VotingActions from './VotingActions';
 import VotingProgress from './VotingProgress';
 import { toast } from '@/hooks/use-toast';
+import { Tables } from '@/integrations/supabase/types';
 
 type VotingStage = 'destinations' | 'accommodations' | 'transportation';
+type TripDestination = Tables<'trip_destinations'>;
+type TripAccommodation = Tables<'trip_accommodations'>;
+type TripTransportation = Tables<'trip_transportation'>;
 
 interface VotingStageManagerProps {
   tripId: string;
@@ -39,7 +43,7 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
   
   const currentParticipant = trip?.trip_participants?.find(p => p.user_id === user?.id);
 
-  const getCurrentItems = () => {
+  const getCurrentItems = (): (TripDestination | TripAccommodation | TripTransportation)[] => {
     switch (currentStage) {
       case 'destinations': return destinations;
       case 'accommodations': return accommodations;
@@ -227,7 +231,7 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
       case 'destinations':
         return (
           <DestinationCard
-            destination={item}
+            destination={item as TripDestination}
             budget={budget}
             onVote={handleVote}
             isAnimating={isAnimating}
@@ -237,7 +241,7 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
       case 'accommodations':
         return (
           <AccommodationCard
-            accommodation={item}
+            accommodation={item as TripAccommodation}
             budget={budget}
             onVote={handleVote}
             isAnimating={isAnimating}
@@ -247,7 +251,7 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
       case 'transportation':
         return (
           <TransportationCard
-            transportation={item}
+            transportation={item as TripTransportation}
             budget={budget}
             onVote={handleVote}
             isAnimating={isAnimating}
