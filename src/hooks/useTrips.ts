@@ -106,6 +106,8 @@ export const useTrip = (tripId: string) => {
             name,
             email,
             has_voted_destinations,
+            has_voted_accommodations,
+            has_voted_transport,
             joined_at
           ),
           trip_destinations (
@@ -119,6 +121,33 @@ export const useTrip = (tripId: string) => {
             estimated_cost_luxury,
             best_time_to_visit,
             highlights
+          ),
+          trip_accommodations (
+            id,
+            name,
+            type,
+            location,
+            description,
+            image_url,
+            price_per_night_budget,
+            price_per_night_mid_range,
+            price_per_night_luxury,
+            amenities,
+            rating
+          ),
+          trip_transportation (
+            id,
+            type,
+            provider,
+            departure_location,
+            arrival_location,
+            departure_time,
+            arrival_time,
+            price_budget,
+            price_mid_range,
+            price_luxury,
+            duration_minutes,
+            description
           )
         `)
         .eq('id', tripId)

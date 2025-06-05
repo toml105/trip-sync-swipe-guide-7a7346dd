@@ -48,17 +48,6 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
     }
   };
 
-  const getCurrentVoteTableInfo = () => {
-    switch (currentStage) {
-      case 'destinations': 
-        return { table: 'destination_votes', itemIdColumn: 'destination_id' };
-      case 'accommodations': 
-        return { table: 'accommodation_votes', itemIdColumn: 'accommodation_id' };
-      case 'transportation': 
-        return { table: 'transportation_votes', itemIdColumn: 'transportation_id' };
-    }
-  };
-
   useEffect(() => {
     if (trip) {
       // Determine current stage based on trip progress
@@ -72,19 +61,40 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
     if (!user || !currentParticipant) return;
 
     try {
-      const { table, itemIdColumn } = getCurrentVoteTableInfo();
+      let votes;
       
-      const { data: votes, error } = await supabase
-        .from(table)
-        .select(`${itemIdColumn}, vote_type`)
-        .eq('trip_id', tripId)
-        .eq('participant_id', currentParticipant.id);
-
-      if (error) throw error;
+      if (stage === 'destinations') {
+        const { data, error } = await supabase
+          .from('destination_votes')
+          .select('destination_id, vote_type')
+          .eq('trip_id', tripId)
+          .eq('participant_id', currentParticipant.id);
+        
+        if (error) throw error;
+        votes = data;
+      } else if (stage === 'accommodations') {
+        const { data, error } = await supabase
+          .from('accommodation_votes')
+          .select('accommodation_id, vote_type')
+          .eq('trip_id', tripId)
+          .eq('participant_id', currentParticipant.id);
+        
+        if (error) throw error;
+        votes = data?.map(v => ({ destination_id: v.accommodation_id, vote_type: v.vote_type }));
+      } else if (stage === 'transportation') {
+        const { data, error } = await supabase
+          .from('transportation_votes')
+          .select('transportation_id, vote_type')
+          .eq('trip_id', tripId)
+          .eq('participant_id', currentParticipant.id);
+        
+        if (error) throw error;
+        votes = data?.map(v => ({ destination_id: v.transportation_id, vote_type: v.vote_type }));
+      }
 
       const votesMap: Record<string, 'like' | 'pass'> = {};
       votes?.forEach(vote => {
-        votesMap[vote[itemIdColumn]] = vote.vote_type as 'like' | 'pass';
+        votesMap[vote.destination_id] = vote.vote_type as 'like' | 'pass';
       });
 
       setUserVotes(votesMap);
@@ -136,21 +146,38 @@ const VotingStageManager = ({ tripId }: VotingStageManagerProps) => {
     setAnimationDirection(vote === 'like' ? 'right' : 'left');
 
     try {
-      const { table, itemIdColumn } = getCurrentVoteTableInfo();
-      
-      // Save vote to database
-      const voteData = {
-        trip_id: tripId,
-        [itemIdColumn]: itemId,
-        participant_id: currentParticipant.id,
-        vote_type: vote,
-      };
-
-      const { error } = await supabase
-        .from(table)
-        .upsert(voteData);
-
-      if (error) throw error;
+      // Save vote to database based on current stage
+      if (currentStage === 'destinations') {
+        const { error } = await supabase
+          .from('destination_votes')
+          .upsert({
+            trip_id: tripId,
+            destination_id: itemId,
+            participant_id: currentParticipant.id,
+            vote_type: vote,
+          });
+        if (error) throw error;
+      } else if (currentStage === 'accommodations') {
+        const { error } = await supabase
+          .from('accommodation_votes')
+          .upsert({
+            trip_id: tripId,
+            accommodation_id: itemId,
+            participant_id: currentParticipant.id,
+            vote_type: vote,
+          });
+        if (error) throw error;
+      } else if (currentStage === 'transportation') {
+        const { error } = await supabase
+          .from('transportation_votes')
+          .upsert({
+            trip_id: tripId,
+            transportation_id: itemId,
+            participant_id: currentParticipant.id,
+            vote_type: vote,
+          });
+        if (error) throw error;
+      }
 
       // Update local state
       const newVotes = { ...userVotes, [itemId]: vote };

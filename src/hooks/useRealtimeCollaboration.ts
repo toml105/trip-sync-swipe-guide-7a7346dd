@@ -90,24 +90,37 @@ export const useRealtimeCollaboration = (tripId: string, stage: 'destinations' |
 
   const fetchVoteCounts = async () => {
     try {
-      const voteTableName = stage === 'destinations' ? 'destination_votes' : 
-                           stage === 'accommodations' ? 'accommodation_votes' : 
-                           'transportation_votes';
+      let votes;
       
-      const itemIdColumn = stage === 'destinations' ? 'destination_id' : 
-                          stage === 'accommodations' ? 'accommodation_id' : 
-                          'transportation_id';
-
-      const { data: votes, error } = await supabase
-        .from(voteTableName)
-        .select(`${itemIdColumn}, vote_type`)
-        .eq('trip_id', tripId);
-
-      if (error) throw error;
+      if (stage === 'destinations') {
+        const { data, error } = await supabase
+          .from('destination_votes')
+          .select('destination_id, vote_type')
+          .eq('trip_id', tripId);
+        
+        if (error) throw error;
+        votes = data?.map(v => ({ itemId: v.destination_id, vote_type: v.vote_type }));
+      } else if (stage === 'accommodations') {
+        const { data, error } = await supabase
+          .from('accommodation_votes')
+          .select('accommodation_id, vote_type')
+          .eq('trip_id', tripId);
+        
+        if (error) throw error;
+        votes = data?.map(v => ({ itemId: v.accommodation_id, vote_type: v.vote_type }));
+      } else if (stage === 'transportation') {
+        const { data, error } = await supabase
+          .from('transportation_votes')
+          .select('transportation_id, vote_type')
+          .eq('trip_id', tripId);
+        
+        if (error) throw error;
+        votes = data?.map(v => ({ itemId: v.transportation_id, vote_type: v.vote_type }));
+      }
 
       const counts: Record<string, { likes: number; passes: number }> = {};
       votes?.forEach(vote => {
-        const itemId = vote[itemIdColumn];
+        const itemId = vote.itemId;
         if (!counts[itemId]) {
           counts[itemId] = { likes: 0, passes: 0 };
         }
